@@ -26,20 +26,38 @@ bot.onEvent = function(session, message) {
   }
 }
 
+
 function onMessage(session, message) {
+  if (message.content.body.includes('choose')) {
+    charity(session)
+  }
   welcome(session)
 }
 
+
 function onCommand(session, command) {
+  console.log(command.content);
   switch (command.content.value) {
-    case 'ping':
-      pong(session)
+    case 'red-cross':
+      charity(command.content.value)
       break
-    case 'count':
-      count(session)
+    case 'ethereum-foundation':
+      session.set('charity', 'ethereum-foundation')
       break
-    case 'donate':
-      donate(session)
+    case 'givewell.org':
+      session.set('charity', 'givewell.org')
+      break
+    case 'iceland':
+      session.set('team1', 'iceland')
+      break
+    case 'croatia':
+      session.set('team1', 'croatia')
+      break
+    case 'scotland':
+      session.set('team2', 'scotland')
+      break
+    case 'england':
+      session.set('team2', 'england')
       break
     }
 }
@@ -69,7 +87,23 @@ function onPayment(session, message) {
 // STATES
 
 function welcome(session) {
-  sendMessage(session, `Hello Token!`)
+  sendMessage(session, `Welcome to charity betting, type charity for choosing charity and games for seeing available games.`)
+}
+
+function charity(session){
+  session.reply(SOFA.Message({
+      body: "Choose a charity you want to bet for with a donation of $0.01.",
+      controls: [
+        {type: "button", label: "Red Cross", value: "red-cross"},
+        {type: "button", label: "Ethereum foundation", value: "ethereum-foundation"},
+        {type: "button", label: "GiveWell.org", value: "givewell.org"},
+        {type: "button", label: "Not now, thanks", value: null}
+      ]
+    }));
+}
+
+function charity(value){
+    session.set('charity', value)
 }
 
 function pong(session) {
