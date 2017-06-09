@@ -1,8 +1,10 @@
-# Token SOFA App
+# Charity beting
+
+This bot gives you the ability to make a charity bet to a charity of your choice for a given soccer matches. 
 
 This repo helps you build a [Token app](https://www.tokenbrowser.com) in Javascript.
 
-The sample bot can:
+The bot can:
 
 * send messages
 * send and request money
