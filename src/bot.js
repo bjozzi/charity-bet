@@ -7,6 +7,7 @@ let bot = new Bot()
 // ROUTING
 
 bot.onEvent = function(session, message) {
+  console.log(message.type)
   switch (message.type) {
     case 'Init':
       welcome(session)
@@ -28,10 +29,14 @@ bot.onEvent = function(session, message) {
 
 
 function onMessage(session, message) {
-  if (message.content.body.includes('choose')) {
+  if (message.content.body.includes('Go')) {
     charity(session)
+    return
   }
-  welcome(session)
+  else{
+    welcome(session)
+  }
+  
 }
 
 
@@ -39,30 +44,39 @@ function onCommand(session, command) {
   console.log(command.content);
   switch (command.content.value) {
     case 'red-cross':
-      charity(command.content.value)
+      session.set('charity', command.content.value)
+      game1(session)
       break
     case 'ethereum-foundation':
-      session.set('charity', 'ethereum-foundation')
+      session.set('charity', command.content.value)
+      game1(session)
       break
     case 'givewell.org':
-      session.set('charity', 'givewell.org')
+      session.set('charity', command.content.value)
+      game1(session)
       break
     case 'iceland':
-      session.set('team1', 'iceland')
+      session.set('team', nameAndOdds(command.content.body))
+      game2(session)
       break
     case 'croatia':
-      session.set('team1', 'croatia')
+      session.set('team', nameAndOdds(command.content.body))
+      game2(session)
       break
     case 'scotland':
-      session.set('team2', 'scotland')
+      session.set('team2', nameAndOdds(command.content.body))
+      final(session)
       break
     case 'england':
-      session.set('team2', 'england')
+      session.set('team2', nameAndOdds(command.content.body))
+      final(session)
       break
     }
 }
 
 function onPayment(session, message) {
+  console.log(session)
+  console.log(message)
   if (message.fromAddress == session.config.paymentAddress) {
     // handle payments sent by the bot
     if (message.status == 'confirmed') {
@@ -87,35 +101,54 @@ function onPayment(session, message) {
 // STATES
 
 function welcome(session) {
-  sendMessage(session, `Welcome to charity betting, type charity for choosing charity and games for seeing available games.`)
+  sendMessage(session, `Charity betting. Type "go" for choosing a charity and what teams to bet on!`)
 }
 
 function charity(session){
   session.reply(SOFA.Message({
-      body: "Choose a charity you want to bet for with a donation of $0.01.",
+      body: "Choose a charity",
       controls: [
         {type: "button", label: "Red Cross", value: "red-cross"},
         {type: "button", label: "Ethereum foundation", value: "ethereum-foundation"},
-        {type: "button", label: "GiveWell.org", value: "givewell.org"},
-        {type: "button", label: "Not now, thanks", value: null}
-      ]
+        {type: "button", label: "GiveWell.org", value: "givewell.org"}
+      ],
+      showKeyboard: false
     }));
 }
 
-function charity(value){
-    session.set('charity', value)
+function game1(session){
+  session.reply(SOFA.Message({
+      body: "Choose a team",
+      controls: [
+        {type: "button", label: "Iceland - 3.97", value: "iceland"},
+        {type: "button", label: "Croatia - 2.01", value: "croatia"}
+      ],
+      showKeyboard: false
+    }));
 }
 
-function pong(session) {
-  sendMessage(session, `Pong`)
+function game2(session){
+  session.reply(SOFA.Message({
+      body: "Choose a team",
+      controls: [
+        {type: "button", label: "England - 1.71", value: "england"},
+        {type: "button", label: "Scotland - 5.47", value: "scotland"}
+      ],
+      showKeyboard: false
+    }));
 }
 
-// example of how to store state on each user
-function count(session) {
-  let count = (session.get('count') || 0) + 1
-  session.set('count', count)
-  sendMessage(session, `${count}`)
+function final(session){
+  var charity = session.get('charity')
+  console.log(session.get('team'))
+  var game = session.get('team')
+  var game2 = session.get('team2')
+  var message = 'You will give ' + charity + " if " + game.name + " or " + game2.name + " will lose!\n"+
+  "Press pay to get the odds and place bet?"
+  session.reply(message);
 }
+
+
 
 function donate(session) {
   // request $1 USD at current exchange rates
@@ -127,14 +160,19 @@ function donate(session) {
 // HELPERS
 
 function sendMessage(session, message) {
-  let controls = [
-    {type: 'button', label: 'Ping', value: 'ping'},
-    {type: 'button', label: 'Count', value: 'count'},
-    {type: 'button', label: 'Donate', value: 'donate'}
-  ]
-  session.reply(SOFA.Message({
-    body: message,
-    controls: controls,
-    showKeyboard: false,
-  }))
+  session.reply(message);
+}
+
+function nameAndOdds(odd){
+  console.log(odd)
+  var res = odd.split("-");
+  console.log(res[0])
+  console.log(res[1])
+  var obj = {name:res[0], odds:res[1]}
+  return obj
+}
+
+//P(A or B) = P(A) + P(B) - P(A and B)
+function calculateOdds(odd1, odd2){
+  return odd1 + odd2 - (odd1 * odd2)
 }
